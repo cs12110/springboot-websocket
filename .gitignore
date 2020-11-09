@@ -1,0 +1,9 @@
+**/target
+**/logs
+**/.idea
+
+**/.DStore
+**/*.iml
+
+
+

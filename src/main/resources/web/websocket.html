@@ -1,0 +1,78 @@
+<html>
+  <div id="message"></div>
+
+  <input type="text" id="text" maxlength="64">
+  <button onclick="send()">发送消息</button>
+</html>
+
+<script>
+  var websocket = null;
+  let websocketUrl = "ws://192.168.38.44:8090/api/websocket/chat/mr3306";
+
+  connectChat();
+
+  /**
+   * 链接WebSocket
+   */
+  function connectChat() {
+    console.log(">> 链接WebSocket");
+    websocket = new WebSocket(websocketUrl);
+
+    /**
+     * Websocket链接错误时调用
+     */
+    websocket.onerror = function () {
+      writeHTML("Websocket链接发生错误");
+    };
+
+    /**
+     * Websocket链接成功时调用
+     */
+    websocket.onopen = function () {
+      writeHTML("Websocket链接成功");
+    };
+
+    /**
+     * 接收到消息的回调方法
+     */
+    websocket.onmessage = function (event) {
+      console.log(event);
+      writeHTML(event.data);
+    };
+
+    /**
+     * 链接关闭时的回调方法
+     */
+    websocket.onclose = function () {
+      writeHTML("Websocket链接关闭");
+    };
+  }
+
+  /**
+   * 关闭WebSock链接
+   */
+  function closeChat() {
+    websocket.close();
+  }
+
+  /**
+   * 将消息写到HTML标签上
+   * @param message
+   */
+  function writeHTML(message) {
+    document.getElementById("message").innerHTML += message + "<br/>";
+  }
+  /**
+   * 发送消息
+   */
+  function send() {
+    var message = document.getElementById("text").value;
+    let messageValue={
+        "from":"myself",
+        "to":"others",
+        "message": message
+    };
+
+    websocket.send(JSON.stringify(messageValue));
+  }
+</script>
