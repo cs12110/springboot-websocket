@@ -33,6 +33,12 @@ public class WebsocketEndpointService {
 
     private static final Map<String, Session> SOCKET_SESSION_STORAGE = new ConcurrentHashMap<>();
 
+    /**
+     * 处理open事件,用户和服务器连接时产生事件,完成之后才能进行通信
+     *
+     * @param session session
+     * @param token   用户token,标志用户是谁
+     */
     @OnOpen
     public void handleOpenEvent(Session session, @PathParam("token") String token) {
         log.info("Function[handleOpenEvent] open by:{},token:{}", session.getId(), token);
@@ -43,12 +49,24 @@ public class WebsocketEndpointService {
         sendMessage(session, sdf.format(new Date()) + " pong");
     }
 
+    /**
+     * 处理关闭事件,例如用户关闭页面时会触发,移除token对应的session
+     *
+     * @param session session
+     * @param token   用户token
+     */
     @OnClose
     public void handleCloseEvent(Session session, @PathParam("token") String token) {
         SOCKET_SESSION_STORAGE.remove(token);
         log.info("Function[handleCloseEvent] close by:{}", session.getId());
     }
 
+    /**
+     * 消息事件,用户发送消息触发事件
+     *
+     * @param message 消息体,可以传入json
+     * @param session session
+     */
     @OnMessage
     public void handleWithMessage(String message, Session session) {
         try {
@@ -59,17 +77,34 @@ public class WebsocketEndpointService {
         }
     }
 
-    public void point(String token, String message) {
-        Session session = SOCKET_SESSION_STORAGE.get(token);
+    /**
+     * 点对点发送消息
+     *
+     * @param receiverToken 接收用户token
+     * @param message       消息体
+     */
+    public void point(String receiverToken, String message) {
+        Session session = SOCKET_SESSION_STORAGE.get(receiverToken);
         sendMessage(session, message);
     }
 
+    /**
+     * 广播消息
+     *
+     * @param message 消息体
+     */
     public void broadcast(String message) {
         for (Map.Entry<String, Session> entry : SOCKET_SESSION_STORAGE.entrySet()) {
             sendMessage(entry.getValue(), message);
         }
     }
 
+    /**
+     * 发送消息
+     *
+     * @param session session
+     * @param message 消息体
+     */
     private void sendMessage(Session session, String message) {
         if (Objects.isNull(session) || !session.isOpen()) {
             log.error("Function[sendMessage]send failure,session is null or session is close");
